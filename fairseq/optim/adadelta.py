@@ -35,6 +35,6 @@ class Adadelta(FairseqOptimizer):
         return {
             'lr': self.args.lr[0],
             'weight_decay': self.args.weight_decay,
-            'rho' : 0.9, 
-            'eps' : 1e-6
+            'rho' : self.args.adadelta_rho, 
+            'eps' : self.args.adadelta_eps,
         }

@@ -18,8 +18,8 @@ from . import (
 )
 
 
-@register_model('gru')
-class GRUModel(FairseqModel):
+@register_model('grudelib')
+class GRUDelibModel(FairseqModel):
     def __init__(self, encoder, decoder):
         super().__init__(encoder, decoder)
 
@@ -271,7 +271,7 @@ class BahdanauAttentionLayer(nn.Module):
         return x, attn_scores
 
 
-class GRUDecoder(FairseqIncrementalDecoder):
+class GRUDelibDecoder(FairseqIncrementalDecoder):
     """GRU decoder."""
     def __init__(
         self, dictionary, embed_dim=512, hidden_size=512, out_embed_dim=512,
@@ -464,7 +464,7 @@ def ZeroLinear(in_features, out_features, bias=True, dropout=0):
     return m
 
 
-@register_model_architecture('gru', 'gru')
+@register_model_architecture('grudelib', 'grudelib')
 def base_architecture(args):
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 512)
     args.encoder_embed_path = getattr(args, 'encoder_embed_path', None)
@@ -486,7 +486,7 @@ def base_architecture(args):
     args.encoder_embed_freeze = getattr(args, 'encoder_embed_freeze', False)
     args.decoder_embed_freeze = getattr(args, 'decoder_embed_freeze', False)
 
-@register_model_architecture('gru', 'gru_bahdanau_wmt_en_fr')
+@register_model_architecture('grudelib', 'grudelib_bahdanau_wmt_en_fr')
 def gru_bahdanau_wmt_en_fr(args):
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 620)
     args.encoder_hidden_size = getattr(args, 'encoder_hidden_size', 1000)
