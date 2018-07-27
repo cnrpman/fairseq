@@ -19,15 +19,15 @@ from fairseq.modules import (
 )
 
 from . import (
-    FairseqIncrementalDecoder, FairseqEncoder, FairseqModel,
+    FairseqIncrementalDecoder, FairseqEncoder, FairseqDualModel,
     register_model, register_model_architecture,
 )
 
 
-@register_model('transformer')
-class TransformerModel(FairseqModel):
-    def __init__(self, encoder, decoder):
-        super().__init__(encoder, decoder)
+@register_model('transformer_dual')
+class TransformerDualModel(FairseqDualModel):
+    def __init__(self, encoder, decoder, encoder2, decoder2):
+        super().__init__(encoder, decoder, encoder2, decoder2)
 
     @staticmethod
     def add_args(parser):
@@ -113,14 +113,16 @@ class TransformerModel(FairseqModel):
             )
 
         encoder = TransformerEncoder(args, src_dict, encoder_embed_tokens)
-        decoder = TransformerDecoder(args, tgt_dict, decoder_embed_tokens)
-        return TransformerModel(encoder, decoder)
+        decoder = TransformerDecoder(args, tgt_dict, decoder_embed_tokens, no_output=True)
+        encoder2 = TransformerEncoder(args, tgt_dict, decoder_embed_tokens, no_input=True)
+        decoder2 = TransformerDecoder(args, src_dict, encoder_embed_tokens)
+        return TransformerDualModel(encoder, decoder, encoder2, decoder2)
 
 
 class TransformerEncoder(FairseqEncoder):
     """Transformer encoder."""
 
-    def __init__(self, args, dictionary, embed_tokens, left_pad=True):
+    def __init__(self, args, dictionary, embed_tokens, left_pad=True, no_input=False):
         super().__init__(dictionary)
         self.dropout = args.dropout
 
@@ -189,7 +191,7 @@ class TransformerEncoder(FairseqEncoder):
 class TransformerDecoder(FairseqIncrementalDecoder):
     """Transformer decoder."""
 
-    def __init__(self, args, dictionary, embed_tokens, left_pad=False):
+    def __init__(self, args, dictionary, embed_tokens, left_pad=False, no_output=False):
         super().__init__(dictionary)
         self.dropout = args.dropout
         self.share_input_output_embed = args.share_decoder_input_output_embed
@@ -211,7 +213,7 @@ class TransformerDecoder(FairseqIncrementalDecoder):
             for i in range(args.decoder_layers)
         ])
 
-        if not self.share_input_output_embed:
+        if not (self.share_input_output_embed or no_output):
             self.embed_out = nn.Parameter(torch.Tensor(len(dictionary), embed_dim))
             nn.init.normal_(self.embed_out, mean=0, std=embed_dim ** -0.5)
 
@@ -415,7 +417,7 @@ def PositionalEmbedding(num_embeddings, embedding_dim, padding_idx, left_pad, le
     return m
 
 
-@register_model_architecture('transformer', 'transformer')
+@register_model_architecture('transformer_dual', 'transformer_dual')
 def base_architecture(args):
     args.encoder_embed_path = getattr(args, 'encoder_embed_path', None)
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 512)
@@ -432,8 +434,8 @@ def base_architecture(args):
     args.dropout = getattr(args, 'dropout', 0.1)
 
 
-@register_model_architecture('transformer', 'transformer_iwslt_de_en')
-def transformer_iwslt_de_en(args):
+@register_model_architecture('transformer_dual', 'transformer_dual_iwslt_de_en')
+def transformer_dual_iwslt_de_en(args):
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 256)
     args.encoder_ffn_embed_dim = getattr(args, 'encoder_ffn_embed_dim', 512)
     args.encoder_attention_heads = getattr(args, 'encoder_attention_heads', 4)
@@ -445,14 +447,14 @@ def transformer_iwslt_de_en(args):
     base_architecture(args)
 
 
-@register_model_architecture('transformer', 'transformer_wmt_en_de')
-def transformer_wmt_en_de(args):
+@register_model_architecture('transformer_dual', 'transformer_dual_wmt_en_de')
+def transformer_dual_wmt_en_de(args):
     base_architecture(args)
 
 
 # parameters used in the "Attention Is All You Need" paper (Vaswani, et al, 2017)
-@register_model_architecture('transformer', 'transformer_vaswani_wmt_en_de_big')
-def transformer_vaswani_wmt_en_de_big(args):
+@register_model_architecture('transformer_dual', 'transformer_dual_vaswani_wmt_en_de_big')
+def transformer_dual_vaswani_wmt_en_de_big(args):
     args.encoder_embed_dim = getattr(args, 'encoder_embed_dim', 1024)
     args.encoder_ffn_embed_dim = getattr(args, 'encoder_ffn_embed_dim', 4096)
     args.encoder_attention_heads = getattr(args, 'encoder_attention_heads', 16)
@@ -464,23 +466,23 @@ def transformer_vaswani_wmt_en_de_big(args):
     base_architecture(args)
 
 
-@register_model_architecture('transformer', 'transformer_vaswani_wmt_en_fr_big')
-def transformer_vaswani_wmt_en_fr_big(args):
+@register_model_architecture('transformer_dual', 'transformer_dual_vaswani_wmt_en_fr_big')
+def transformer_dual_vaswani_wmt_en_fr_big(args):
     args.dropout = getattr(args, 'dropout', 0.1)
-    transformer_vaswani_wmt_en_de_big(args)
+    transformer_dual_vaswani_wmt_en_de_big(args)
 
 
-@register_model_architecture('transformer', 'transformer_wmt_en_de_big')
-def transformer_wmt_en_de_big(args):
+@register_model_architecture('transformer_dual', 'transformer_dual_wmt_en_de_big')
+def transformer_dual_wmt_en_de_big(args):
     args.attention_dropout = getattr(args, 'attention_dropout', 0.1)
-    transformer_vaswani_wmt_en_de_big(args)
+    transformer_dual_vaswani_wmt_en_de_big(args)
 
 
 # default parameters used in tensor2tensor implementation
-@register_model_architecture('transformer', 'transformer_wmt_en_de_big_t2t')
-def transformer_wmt_en_de_big_t2t(args):
+@register_model_architecture('transformer_dual', 'transformer_dual_wmt_en_de_big_t2t')
+def transformer_dual_wmt_en_de_big_t2t(args):
     args.encoder_normalize_before = getattr(args, 'encoder_normalize_before', True)
     args.encoder_normalize_before = getattr(args, 'decoder_normalize_before', True)
     args.attention_dropout = getattr(args, 'attention_dropout', 0.1)
     args.relu_dropout = getattr(args, 'relu_dropout', 0.1)
-    transformer_vaswani_wmt_en_de_big(args)
+    transformer_dual_vaswani_wmt_en_de_big(args)

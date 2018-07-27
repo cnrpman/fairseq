@@ -113,6 +113,32 @@ class FairseqModel(BaseFairseqModel):
         """Maximum length supported by the model."""
         return (self.encoder.max_positions(), self.decoder.max_positions())
 
+class FairseqDualModel(BaseFairseqModel):
+    """Base class for encoder-decoder models."""
+
+    def __init__(self, encoder, decoder, encoder2, decoder2):
+        super().__init__()
+
+        self.encoder = encoder
+        self.decoder = decoder
+        self.encoder2 = encoder2
+        self.decoder2 = decoder2
+        assert isinstance(self.encoder, FairseqEncoder)
+        assert isinstance(self.decoder, FairseqDecoder)
+        assert isinstance(self.encoder2, FairseqEncoder)
+        assert isinstance(self.decoder2, FairseqDecoder)
+
+    def forward(self, src_tokens, src_lengths, prev_output_tokens):
+        encoder_out = self.encoder(src_tokens, src_lengths)
+        decoder_out = self.decoder(prev_output_tokens, encoder_out)
+        encoder2_out = self.encoder2(prev_output_tokens, decoder_out)
+        decoder2_out = self.decoder2(src_tokens, encoder2_out)
+        return decoder2_out
+
+    def max_positions(self):
+        """Maximum length supported by the model."""
+        return (self.encoder.max_positions(), self.decoder.max_positions())
+
 
 class FairseqLanguageModel(BaseFairseqModel):
     """Base class for decoder-only models."""
