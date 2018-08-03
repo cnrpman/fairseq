@@ -1,8 +1,6 @@
-model=transformer
-PROBLEM=WMT14_ENDE
 SETTING=transformer_vaswani_wmt_en_fr_big
 
-CUDA_VISIBLE_DEVICES=0,1 python train.py data-bin/wmt14_en_fr \
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py data-bin/wmt14_en_fr \
 --arch $SETTING --share-all-embeddings \
   --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm 0.0 \
   --lr-scheduler inverse_sqrt --warmup-init-lr 1e-07 --warmup-updates 4000 \

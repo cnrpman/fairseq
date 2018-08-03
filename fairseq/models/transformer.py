@@ -534,7 +534,7 @@ def base_lm_architecture(args):
     args.decoder_learned_pos = getattr(args, 'decoder_learned_pos', False)
 
     # The model training is not stable without this
-    args.decoder_normalize_before = True
+    args.decoder_normalize_before = getattr(args, 'decoder_normalize_before', False)
 
 
 @register_model_architecture('transformer_lm', 'transformer_lm_big')
