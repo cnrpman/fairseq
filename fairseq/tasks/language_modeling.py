@@ -36,6 +36,8 @@ class LanguageModelingTask(FairseqTask):
                             help='max number of tokens per sample for LM dataset')
         parser.add_argument('--raw-text', default=False, action='store_true',
                             help='load raw text dataset')
+        parser.add_argument('--shuffle', default=False, action='store_true',
+                            help='shuffle')
 
     def __init__(self, args, dictionary):
         super().__init__(args)
@@ -86,7 +88,7 @@ class LanguageModelingTask(FairseqTask):
             dataset = ConcatDataset(loaded_datasets)
             sizes = np.concatenate([ds.sizes for ds in loaded_datasets])
 
-        self.datasets[split] = MonolingualDataset(dataset, sizes, self.dictionary, shuffle=False)
+        self.datasets[split] = MonolingualDataset(dataset, sizes, self.dictionary, shuffle=self.args.shuffle)
 
     @property
     def target_dictionary(self):

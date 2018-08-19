@@ -1,6 +1,7 @@
 TEXT=data/lm_wmt14_en_de
 DESTFOLD=data-bin/lm_wmt14
 
+# Do 2 languages' preprocessing parallelly
 for LANG in en de; do
     DEST=${DESTFOLD}_$LANG
     SOURCE=data-bin/wmt14_en_de/dict.$LANG.txt

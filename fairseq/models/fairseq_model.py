@@ -129,11 +129,12 @@ class FairseqDualModel(BaseFairseqModel):
         assert isinstance(self.decoder2, FairseqDecoder)
 
     def forward(self, src_tokens, src_lengths, prev_output_tokens):
+        # src_lengths has no meaning for Transformer model
         encoder_out = self.encoder(src_tokens, src_lengths)
         decoder_out = self.decoder(prev_output_tokens, encoder_out)
-        encoder2_out = self.encoder2(prev_output_tokens, decoder_out)
+        encoder2_out = self.encoder2(decoder_out[0], src_lengths)
         decoder2_out = self.decoder2(src_tokens, encoder2_out)
-        return decoder2_out
+        return decoder_out, decoder2_out
 
     def max_positions(self):
         """Maximum length supported by the model."""

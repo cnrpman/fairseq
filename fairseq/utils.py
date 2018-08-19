@@ -70,18 +70,18 @@ def load_model_state(filename, model):
 
     # load model parameters
     try:
-        model.load_state_dict(state['model'], strict=True)
+        model.load_state_dict(state['model'], strict=False)
     except Exception:
         raise Exception('Cannot load model parameters from checkpoint, '
                         'please ensure that the architectures match')
 
-    return state['extra_state'], state['optimizer_history'], state['last_optimizer_state']
+    return state.get('extra_state', None), state.get('optimizer_history', None), state.get('last_optimizer_state', None)
 
 
 def _upgrade_state_dict(state):
     """Helper for upgrading old model checkpoints."""
     # add optimizer_history
-    if 'optimizer_history' not in state:
+    if 'optimizer_history' not in state and 'best_loss' in state and 'optimizer' in state:
         state['optimizer_history'] = [
             {
                 'criterion_name': 'CrossEntropyCriterion',
@@ -102,28 +102,28 @@ def _upgrade_state_dict(state):
         del state['batch_offset']
         del state['val_loss']
     # reduce optimizer history's memory usage (only keep the last state)
-    if 'optimizer' in state['optimizer_history'][-1]:
+    if 'optimizer_history' in state and 'optimizer' in state['optimizer_history'][-1]:
         state['last_optimizer_state'] = state['optimizer_history'][-1]['optimizer']
         for optim_hist in state['optimizer_history']:
             del optim_hist['optimizer']
     # record the optimizer class name
-    if 'optimizer_name' not in state['optimizer_history'][-1]:
+    if 'optimizer_history' in state and 'optimizer_name' not in state['optimizer_history'][-1]:
         state['optimizer_history'][-1]['optimizer_name'] = 'FairseqNAG'
     # move best_loss into lr_scheduler_state
-    if 'lr_scheduler_state' not in state['optimizer_history'][-1]:
+    if 'optimizer_history' in state and 'lr_scheduler_state' not in state['optimizer_history'][-1]:
         state['optimizer_history'][-1]['lr_scheduler_state'] = {
             'best': state['optimizer_history'][-1]['best_loss'],
         }
         del state['optimizer_history'][-1]['best_loss']
     # keep track of number of updates
-    if 'num_updates' not in state['optimizer_history'][-1]:
+    if 'optimizer_history' in state and 'num_updates' not in state['optimizer_history'][-1]:
         state['optimizer_history'][-1]['num_updates'] = 0
     # old model checkpoints may not have separate source/target positions
-    if hasattr(state['args'], 'max_positions') and not hasattr(state['args'], 'max_source_positions'):
+    if 'args' in state and hasattr(state['args'], 'max_positions') and not hasattr(state['args'], 'max_source_positions'):
         state['args'].max_source_positions = state['args'].max_positions
         state['args'].max_target_positions = state['args'].max_positions
     # use stateful training data iterator
-    if 'train_iterator' not in state['extra_state']:
+    if 'extra_state' in state and 'train_iterator' not in state['extra_state']:
         state['extra_state']['train_iterator'] = {
             'epoch': state['extra_state']['epoch'],
             'iterations_in_epoch': state['extra_state'].get('batch_offset', 0),

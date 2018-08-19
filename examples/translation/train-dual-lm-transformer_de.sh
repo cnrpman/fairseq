@@ -1,7 +1,7 @@
 SETTING=transformer_lm
-LANG=en
+LANG=de
 
-dr='0.005'
+dr='0.001'
 cl='0.0'
 SAVE_DIR=checkpoints/wmt14.lm.$LANG.joined-dict.transformer.drop$dr.clip$cl
 echo Using checkpoint destination $SAVE_DIR
@@ -9,7 +9,7 @@ echo Using checkpoint destination $SAVE_DIR
 CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py data-bin/lm_wmt14_$LANG \
   --task language_modeling --arch $SETTING \
   --sample-break-mode eos \
-  --max-epoch 1 \
+  --max-epoch 5 \
   --optimizer adam --adam-betas '(0.9, 0.98)' --clip-norm $cl \
   --lr-scheduler inverse_sqrt --warmup-init-lr 1e-07 --warmup-updates 4000 \
   --lr 0.001 --min-lr 1e-09  \
